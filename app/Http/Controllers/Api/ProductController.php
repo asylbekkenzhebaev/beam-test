@@ -7,6 +7,7 @@ use App\Http\Requests\Api\UpdateProductRequest;
 use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\OpenApi\Controllers\ProductControllerDoc;
+use App\Services\EntityBroadcastService;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
@@ -35,6 +36,15 @@ class ProductController extends ProductControllerDoc
         $product->tags()->sync($data['tags'] ?? []);
         $product->load(['category', 'tags']);
 
+        app(EntityBroadcastService::class)->broadcastAfterResponse(
+            entity: 'product',
+            action: 'created',
+            id: $product->id,
+            title: 'Товар создан',
+            message: sprintf('Товар "%s" был создан.', $product->name),
+            url: route('products.index'),
+        );
+
         return (new ProductResource($product))
             ->response()
             ->setStatusCode(ResponseAlias::HTTP_CREATED);
@@ -59,6 +69,15 @@ class ProductController extends ProductControllerDoc
 
         $product->tags()->sync($data['tags'] ?? []);
         $product->load(['category', 'tags']);
+
+        app(EntityBroadcastService::class)->broadcastAfterResponse(
+            entity: 'product',
+            action: 'updated',
+            id: $product->id,
+            title: 'Товар обновлен',
+            message: sprintf('Товар "%s" был обновлен.', $product->name),
+            url: route('products.index'),
+        );
 
         return new ProductResource($product);
     }

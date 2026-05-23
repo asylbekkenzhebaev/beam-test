@@ -302,6 +302,81 @@ test('user index closes modal after child save event', function () {
         ->assertSet('statusMessage', 'Пользователь создан.');
 });
 
+test('users table refreshes after external broadcast action', function () {
+    $existingUser = User::factory()->create([
+        'name' => 'Alice',
+    ]);
+
+    $component = Livewire::test(UserIndex::class)
+        ->assertSee($existingUser->name);
+
+    User::factory()->create([
+        'name' => 'Bob External',
+    ]);
+
+    $component
+        ->call('refreshFromBroadcast')
+        ->assertSee('Bob External')
+        ->assertSet('lastExternalRefreshAt', fn (?int $value) => is_int($value) && $value > 0);
+});
+
+test('categories table refreshes after external broadcast action', function () {
+    $existingCategory = Category::factory()->create([
+        'name' => 'Ноутбуки',
+    ]);
+
+    $component = Livewire::test(CategoryIndex::class)
+        ->assertSee($existingCategory->name);
+
+    Category::factory()->create([
+        'name' => 'Моноблоки',
+    ]);
+
+    $component
+        ->call('refreshFromBroadcast')
+        ->assertSee('Моноблоки')
+        ->assertSet('lastExternalRefreshAt', fn (?int $value) => is_int($value) && $value > 0);
+});
+
+test('products table refreshes after external broadcast action', function () {
+    $category = Category::factory()->create();
+    $existingProduct = Product::factory()->create([
+        'category_id' => $category->id,
+        'name' => 'ASUS ROG Strix G16',
+    ]);
+
+    $component = Livewire::test(ProductIndex::class)
+        ->assertSee($existingProduct->name);
+
+    Product::factory()->create([
+        'category_id' => $category->id,
+        'name' => 'Lenovo ThinkPad X1 Carbon',
+    ]);
+
+    $component
+        ->call('refreshFromBroadcast')
+        ->assertSee('Lenovo ThinkPad X1 Carbon')
+        ->assertSet('lastExternalRefreshAt', fn (?int $value) => is_int($value) && $value > 0);
+});
+
+test('tags table refreshes after external broadcast action', function () {
+    $existingTag = Tag::factory()->create([
+        'name' => 'SSD',
+    ]);
+
+    $component = Livewire::test(TagIndex::class)
+        ->assertSee($existingTag->name);
+
+    Tag::factory()->create([
+        'name' => 'Wi-Fi 7',
+    ]);
+
+    $component
+        ->call('refreshFromBroadcast')
+        ->assertSee('Wi-Fi 7')
+        ->assertSet('lastExternalRefreshAt', fn (?int $value) => is_int($value) && $value > 0);
+});
+
 test('invalid user creation does not broadcast a pusher notification', function () {
     $broadcasts = Mockery::mock(EntityBroadcastService::class);
     $broadcasts->shouldNotReceive('broadcastAfterResponse');
@@ -351,4 +426,27 @@ test('delete buttons use livewire confirm instead of inline wire access', functi
         ->assertOk()
         ->assertSee('wire:confirm="Удалить этот тег?"', false)
         ->assertDontSee('$wire.delete', false);
+});
+
+test('catalog pages listen only to their own websocket entity events', function () {
+    $this->get(route('users.index'))
+        ->assertOk()
+        ->assertSee("catalog-entity-changed.window", false)
+        ->assertSee("\$event.detail.entity === 'user'", false)
+        ->assertDontSee("\$event.detail.entity === 'category'", false);
+
+    $this->get(route('categories.index'))
+        ->assertOk()
+        ->assertSee("\$event.detail.entity === 'category'", false)
+        ->assertDontSee("\$event.detail.entity === 'product'", false);
+
+    $this->get(route('products.index'))
+        ->assertOk()
+        ->assertSee("\$event.detail.entity === 'product'", false)
+        ->assertDontSee("\$event.detail.entity === 'tag'", false);
+
+    $this->get(route('tags.index'))
+        ->assertOk()
+        ->assertSee("\$event.detail.entity === 'tag'", false)
+        ->assertDontSee("\$event.detail.entity === 'user'", false);
 });

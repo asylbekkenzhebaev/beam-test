@@ -1,4 +1,8 @@
-<section class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm shadow-stone-200/70">
+<section
+    x-data
+    x-on:catalog-entity-changed.window="if ($event.detail.entity === 'product') { $wire.refreshFromBroadcast() }"
+    class="rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm shadow-stone-200/70"
+>
     <div class="mb-6 flex items-center justify-between gap-4">
         <div>
             <h2 class="text-xl font-semibold">Товары</h2>

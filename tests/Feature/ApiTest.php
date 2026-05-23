@@ -4,6 +4,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Tag;
 use App\Models\User;
+use App\Services\EntityBroadcastService;
 use Illuminate\Support\Facades\Artisan;
 
 test('users api index returns paginated users', function () {
@@ -93,6 +94,26 @@ test('tags api returns counts and show includes products', function () {
 });
 
 test('users api can create and update users', function () {
+    $broadcasts = Mockery::mock(EntityBroadcastService::class);
+    $broadcasts->shouldReceive('broadcastAfterResponse')
+        ->once()
+        ->withArgs(fn (string $entity, string $action, int $id, string $title, string $message, ?string $url) => $entity === 'user'
+            && $action === 'created'
+            && $id > 0
+            && $title === 'Пользователь создан'
+            && str_contains($message, 'Alice')
+            && $url === route('users.index'))
+        ->andReturn([]);
+    $broadcasts->shouldReceive('broadcastAfterResponse')
+        ->once()
+        ->withArgs(fn (string $entity, string $action, int $id, string $title, string $message, ?string $url) => $entity === 'user'
+            && $action === 'updated'
+            && $title === 'Пользователь обновлен'
+            && str_contains($message, 'Alice Updated')
+            && $url === route('users.index'))
+        ->andReturn([]);
+    $this->app->instance(EntityBroadcastService::class, $broadcasts);
+
     $createResponse = $this->postJson('/api/users', [
         'name' => 'Alice',
         'email' => 'alice@example.com',
@@ -113,6 +134,26 @@ test('users api can create and update users', function () {
 });
 
 test('categories api can create, update, and protect deletion with products', function () {
+    $broadcasts = Mockery::mock(EntityBroadcastService::class);
+    $broadcasts->shouldReceive('broadcastAfterResponse')
+        ->once()
+        ->withArgs(fn (string $entity, string $action, int $id, string $title, string $message, ?string $url) => $entity === 'category'
+            && $action === 'created'
+            && $id > 0
+            && $title === 'Категория создана'
+            && str_contains($message, 'Hardware')
+            && $url === route('categories.index'))
+        ->andReturn([]);
+    $broadcasts->shouldReceive('broadcastAfterResponse')
+        ->once()
+        ->withArgs(fn (string $entity, string $action, int $id, string $title, string $message, ?string $url) => $entity === 'category'
+            && $action === 'updated'
+            && $title === 'Категория обновлена'
+            && str_contains($message, 'Devices')
+            && $url === route('categories.index'))
+        ->andReturn([]);
+    $this->app->instance(EntityBroadcastService::class, $broadcasts);
+
     $createResponse = $this->postJson('/api/categories', [
         'name' => 'Hardware',
     ]);
@@ -141,6 +182,26 @@ test('products api can create update and delete products with synced tags', func
     $category = Category::factory()->create();
     $otherCategory = Category::factory()->create();
     $tags = Tag::factory()->count(2)->create();
+
+    $broadcasts = Mockery::mock(EntityBroadcastService::class);
+    $broadcasts->shouldReceive('broadcastAfterResponse')
+        ->once()
+        ->withArgs(fn (string $entity, string $action, int $id, string $title, string $message, ?string $url) => $entity === 'product'
+            && $action === 'created'
+            && $id > 0
+            && $title === 'Товар создан'
+            && str_contains($message, 'Demo Product')
+            && $url === route('products.index'))
+        ->andReturn([]);
+    $broadcasts->shouldReceive('broadcastAfterResponse')
+        ->once()
+        ->withArgs(fn (string $entity, string $action, int $id, string $title, string $message, ?string $url) => $entity === 'product'
+            && $action === 'updated'
+            && $title === 'Товар обновлен'
+            && str_contains($message, 'Updated Product')
+            && $url === route('products.index'))
+        ->andReturn([]);
+    $this->app->instance(EntityBroadcastService::class, $broadcasts);
 
     $createResponse = $this->postJson('/api/products', [
         'category_id' => $category->id,
@@ -171,6 +232,26 @@ test('products api can create update and delete products with synced tags', func
 });
 
 test('tags api can create update and delete tags', function () {
+    $broadcasts = Mockery::mock(EntityBroadcastService::class);
+    $broadcasts->shouldReceive('broadcastAfterResponse')
+        ->once()
+        ->withArgs(fn (string $entity, string $action, int $id, string $title, string $message, ?string $url) => $entity === 'tag'
+            && $action === 'created'
+            && $id > 0
+            && $title === 'Тег создан'
+            && str_contains($message, 'featured')
+            && $url === route('tags.index'))
+        ->andReturn([]);
+    $broadcasts->shouldReceive('broadcastAfterResponse')
+        ->once()
+        ->withArgs(fn (string $entity, string $action, int $id, string $title, string $message, ?string $url) => $entity === 'tag'
+            && $action === 'updated'
+            && $title === 'Тег обновлен'
+            && str_contains($message, 'sale')
+            && $url === route('tags.index'))
+        ->andReturn([]);
+    $this->app->instance(EntityBroadcastService::class, $broadcasts);
+
     $createResponse = $this->postJson('/api/tags', [
         'name' => 'featured',
     ]);

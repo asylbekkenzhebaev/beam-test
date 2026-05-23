@@ -7,6 +7,7 @@ use App\Http\Requests\Api\UpdateUserRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\OpenApi\Controllers\UserControllerDoc;
+use App\Services\EntityBroadcastService;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
@@ -25,6 +26,15 @@ class UserController extends UserControllerDoc
     {
         $user = User::create($request->validated());
 
+        app(EntityBroadcastService::class)->broadcastAfterResponse(
+            entity: 'user',
+            action: 'created',
+            id: $user->id,
+            title: 'Пользователь создан',
+            message: sprintf('Пользователь "%s" был создан.', $user->name),
+            url: route('users.index'),
+        );
+
         return (new UserResource($user))
             ->response()
             ->setStatusCode(ResponseAlias::HTTP_CREATED);
@@ -38,6 +48,15 @@ class UserController extends UserControllerDoc
     public function update(UpdateUserRequest $request, User $user): UserResource
     {
         $user->update($request->validated());
+
+        app(EntityBroadcastService::class)->broadcastAfterResponse(
+            entity: 'user',
+            action: 'updated',
+            id: $user->id,
+            title: 'Пользователь обновлен',
+            message: sprintf('Пользователь "%s" был обновлен.', $user->name),
+            url: route('users.index'),
+        );
 
         return new UserResource($user);
     }

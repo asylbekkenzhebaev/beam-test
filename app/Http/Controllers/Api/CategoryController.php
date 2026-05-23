@@ -7,6 +7,7 @@ use App\Http\Requests\Api\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use App\OpenApi\Controllers\CategoryControllerDoc;
+use App\Services\EntityBroadcastService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
@@ -28,6 +29,15 @@ class CategoryController extends CategoryControllerDoc
         $category = Category::create($request->validated());
         $category->loadCount('products');
 
+        app(EntityBroadcastService::class)->broadcastAfterResponse(
+            entity: 'category',
+            action: 'created',
+            id: $category->id,
+            title: 'Категория создана',
+            message: sprintf('Категория "%s" была создана.', $category->name),
+            url: route('categories.index'),
+        );
+
         return (new CategoryResource($category))
             ->response()
             ->setStatusCode(ResponseAlias::HTTP_CREATED);
@@ -44,6 +54,15 @@ class CategoryController extends CategoryControllerDoc
     {
         $category->update($request->validated());
         $category->loadCount('products');
+
+        app(EntityBroadcastService::class)->broadcastAfterResponse(
+            entity: 'category',
+            action: 'updated',
+            id: $category->id,
+            title: 'Категория обновлена',
+            message: sprintf('Категория "%s" была обновлена.', $category->name),
+            url: route('categories.index'),
+        );
 
         return new CategoryResource($category);
     }

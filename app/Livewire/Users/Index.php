@@ -12,6 +12,8 @@ class Index extends Component
 
     public ?int $editingId = null;
 
+    public ?int $lastExternalRefreshAt = null;
+
     public ?string $statusMessage = null;
 
     public ?string $errorMessage = null;
@@ -56,6 +58,11 @@ class Index extends Component
 
         $this->statusMessage = 'Пользователь удален.';
         $this->errorMessage = null;
+    }
+
+    public function refreshFromBroadcast(): void
+    {
+        $this->lastExternalRefreshAt = now()->getTimestampMs();
     }
 
     public function render()

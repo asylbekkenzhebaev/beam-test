@@ -69,6 +69,10 @@ const setupCatalogPusher = () => {
         lastToastSignature = signature;
         lastToastAt = now;
 
+        window.dispatchEvent(new CustomEvent('catalog-entity-changed', {
+            detail: data,
+        }));
+
         const toast = document.createElement('article');
         toast.className = 'pointer-events-auto translate-x-4 opacity-0 rounded-[1.5rem] border border-stone-200 bg-white/95 p-4 shadow-xl shadow-stone-300/40 backdrop-blur transition duration-300';
 

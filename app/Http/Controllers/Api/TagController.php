@@ -7,6 +7,7 @@ use App\Http\Requests\Api\UpdateTagRequest;
 use App\Http\Resources\TagResource;
 use App\Models\Tag;
 use App\OpenApi\Controllers\TagControllerDoc;
+use App\Services\EntityBroadcastService;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
@@ -27,6 +28,15 @@ class TagController extends TagControllerDoc
         $tag = Tag::create($request->validated());
         $tag->loadCount('products');
 
+        app(EntityBroadcastService::class)->broadcastAfterResponse(
+            entity: 'tag',
+            action: 'created',
+            id: $tag->id,
+            title: 'Тег создан',
+            message: sprintf('Тег "%s" был создан.', $tag->name),
+            url: route('tags.index'),
+        );
+
         return (new TagResource($tag))
             ->response()
             ->setStatusCode(ResponseAlias::HTTP_CREATED);
@@ -43,6 +53,15 @@ class TagController extends TagControllerDoc
     {
         $tag->update($request->validated());
         $tag->loadCount('products');
+
+        app(EntityBroadcastService::class)->broadcastAfterResponse(
+            entity: 'tag',
+            action: 'updated',
+            id: $tag->id,
+            title: 'Тег обновлен',
+            message: sprintf('Тег "%s" был обновлен.', $tag->name),
+            url: route('tags.index'),
+        );
 
         return new TagResource($tag);
     }
