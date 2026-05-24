@@ -69,6 +69,7 @@ class Index extends Component
     {
         return view('livewire.users.index', [
             'users' => User::query()
+                ->with('profile')
                 ->latest()
                 ->get(),
         ]);

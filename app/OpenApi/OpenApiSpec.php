@@ -15,11 +15,19 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: 'Products')]
 #[OA\Tag(name: 'Tags')]
 #[OA\Schema(
+    schema: 'UserProfileResource',
+    properties: [
+        new OA\Property(property: 'phone', type: 'string', nullable: true, example: '+996 555 123 456'),
+    ],
+    type: 'object',
+)]
+#[OA\Schema(
     schema: 'UserSummary',
     properties: [
         new OA\Property(property: 'id', type: 'integer', example: 1),
         new OA\Property(property: 'name', type: 'string', example: 'Alice'),
         new OA\Property(property: 'email', type: 'string', format: 'email', example: 'alice@example.com'),
+        new OA\Property(property: 'phone', type: 'string', nullable: true, example: '+996 555 123 456'),
         new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
         new OA\Property(property: 'updated_at', type: 'string', format: 'date-time'),
     ],

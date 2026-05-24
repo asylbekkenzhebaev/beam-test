@@ -10,6 +10,7 @@ use App\Livewire\Users\Form as UserForm;
 use App\Livewire\Users\Index as UserIndex;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Profile;
 use App\Models\Tag;
 use App\Models\User;
 use App\Services\EntityBroadcastService;
@@ -55,8 +56,13 @@ test('user creation broadcasts a pusher notification', function () {
     Livewire::test(UserForm::class)
         ->set('name', 'Alice')
         ->set('email', 'alice@example.com')
+        ->set('phone', '+996 555 123 456')
         ->call('save')
         ->assertDispatched('user-saved');
+
+    $user = User::query()->where('email', 'alice@example.com')->firstOrFail();
+
+    expect($user->profile?->phone)->toBe('+996 555 123 456');
 });
 
 test('user update broadcasts a pusher notification', function () {
@@ -79,8 +85,11 @@ test('user update broadcasts a pusher notification', function () {
     Livewire::test(UserForm::class, ['recordId' => $user->id])
         ->set('name', 'Alice Updated')
         ->set('email', $user->email)
+        ->set('phone', '+996 700 111 222')
         ->call('save')
         ->assertDispatched('user-saved');
+
+    expect($user->fresh()->profile?->phone)->toBe('+996 700 111 222');
 });
 
 test('category with products cannot be deleted', function () {
@@ -389,16 +398,21 @@ test('invalid user creation does not broadcast a pusher notification', function 
         ->assertHasErrors(['name', 'email']);
 });
 
-test('user list shows user data without profile fields', function () {
-    User::factory()->create([
+test('user list shows user data with profile phone', function () {
+    $user = User::factory()->create([
         'name' => 'Alice',
         'email' => 'alice@example.com',
+    ]);
+    Profile::factory()->create([
+        'user_id' => $user->id,
+        'phone' => '+996 555 000 111',
     ]);
 
     $this->get(route('users.index'))
         ->assertOk()
         ->assertSee('Alice')
-        ->assertSee('alice@example.com');
+        ->assertSee('alice@example.com')
+        ->assertSee('+996 555 000 111');
 });
 
 test('delete buttons use livewire confirm instead of inline wire access', function () {

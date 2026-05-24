@@ -16,6 +16,7 @@ class UserController extends UserControllerDoc
     public function index()
     {
         $users = User::query()
+            ->with('profile')
             ->latest()
             ->paginate(10);
 
@@ -24,7 +25,12 @@ class UserController extends UserControllerDoc
 
     public function store(StoreUserRequest $request)
     {
-        $user = User::create($request->validated());
+        $payload = $request->validated();
+        $phone = trim((string) ($payload['phone'] ?? ''));
+        unset($payload['phone']);
+
+        $user = User::create($payload);
+        $this->syncProfile($user, $phone);
 
         app(EntityBroadcastService::class)->broadcastAfterResponse(
             entity: 'user',
@@ -35,19 +41,24 @@ class UserController extends UserControllerDoc
             url: route('users.index'),
         );
 
-        return (new UserResource($user))
+        return (new UserResource($user->load('profile')))
             ->response()
             ->setStatusCode(ResponseAlias::HTTP_CREATED);
     }
 
     public function show(User $user): UserResource
     {
-        return new UserResource($user);
+        return new UserResource($user->load('profile'));
     }
 
     public function update(UpdateUserRequest $request, User $user): UserResource
     {
-        $user->update($request->validated());
+        $payload = $request->validated();
+        $phone = trim((string) ($payload['phone'] ?? ''));
+        unset($payload['phone']);
+
+        $user->update($payload);
+        $this->syncProfile($user, $phone);
 
         app(EntityBroadcastService::class)->broadcastAfterResponse(
             entity: 'user',
@@ -58,7 +69,7 @@ class UserController extends UserControllerDoc
             url: route('users.index'),
         );
 
-        return new UserResource($user);
+        return new UserResource($user->load('profile'));
     }
 
     public function destroy(User $user): Response
@@ -66,5 +77,19 @@ class UserController extends UserControllerDoc
         $user->delete();
 
         return response()->noContent();
+    }
+
+    private function syncProfile(User $user, string $phone): void
+    {
+        if ($phone === '') {
+            $user->profile()->delete();
+
+            return;
+        }
+
+        $user->profile()->updateOrCreate(
+            ['user_id' => $user->id],
+            ['phone' => $phone],
+        );
     }
 }

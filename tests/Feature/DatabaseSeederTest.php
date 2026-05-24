@@ -2,6 +2,7 @@
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Profile;
 use App\Models\Tag;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
@@ -11,6 +12,7 @@ test('entity seeders create the expected laptop dataset', function () {
     Artisan::call('db:seed', ['--class' => DatabaseSeeder::class]);
 
     expect(User::query()->count())->toBe(3);
+    expect(Profile::query()->count())->toBe(3);
     expect(Category::query()->count())->toBe(5);
     expect(Product::query()->count())->toBe(10);
     expect(Tag::query()->count())->toBe(15);
@@ -28,6 +30,7 @@ test('entity seeders create the expected laptop dataset', function () {
     expect($gamingCategory)->not->toBeNull();
     expect($ultrabookCategory)->not->toBeNull();
     expect($studyTag)->not->toBeNull();
+    expect(User::query()->whereHas('profile')->count())->toBe(3);
 
     expect(
         Product::query()->where('name', 'ASUS ROG Strix G16')->first()?->tags()->count()

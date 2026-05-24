@@ -15,6 +15,8 @@ class Form extends Component
 
     public string $email = '';
 
+    public string $phone = '';
+
     public function mount(?int $recordId = null): void
     {
         $this->recordId = $recordId;
@@ -23,18 +25,22 @@ class Form extends Component
             return;
         }
 
-        $user = User::query()->findOrFail($recordId);
+        $user = User::query()->with('profile')->findOrFail($recordId);
 
         $this->name = $user->name;
         $this->email = $user->email;
+        $this->phone = $user->profile?->phone ?? '';
     }
 
     public function save(EntityBroadcastService $broadcasts)
     {
         $data = $this->validate($this->rules());
+        $phone = trim((string) ($data['phone'] ?? ''));
+        unset($data['phone']);
 
         if ($this->recordId === null) {
             $user = User::query()->create($data);
+            $this->syncProfile($user, $phone);
 
             $broadcasts->broadcastAfterResponse(
                 entity: 'user',
@@ -52,6 +58,7 @@ class Form extends Component
 
         $user = User::query()->findOrFail($this->recordId);
         $user->update($data);
+        $this->syncProfile($user, $phone);
 
         $broadcasts->broadcastAfterResponse(
             entity: 'user',
@@ -85,6 +92,21 @@ class Form extends Component
                 'max:255',
                 Rule::unique('users', 'email')->ignore($this->recordId),
             ],
+            'phone' => ['nullable', 'string', 'max:255'],
         ];
+    }
+
+    private function syncProfile(User $user, string $phone): void
+    {
+        if ($phone === '') {
+            $user->profile()->delete();
+
+            return;
+        }
+
+        $user->profile()->updateOrCreate(
+            ['user_id' => $user->id],
+            ['phone' => $phone],
+        );
     }
 }

@@ -761,6 +761,12 @@
                         "format": "email",
                         "example": "alice@example.com",
                         "maxLength": 255
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+996 555 123 456",
+                        "nullable": true,
+                        "maxLength": 255
                     }
                 },
                 "type": "object"
@@ -839,6 +845,12 @@
                         "type": "string",
                         "format": "email",
                         "example": "alice.updated@example.com",
+                        "maxLength": 255
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+996 555 123 456",
+                        "nullable": true,
                         "maxLength": 255
                     }
                 },
@@ -963,6 +975,19 @@
                         "format": "email",
                         "example": "alice@example.com"
                     },
+                    "phone": {
+                        "type": "string",
+                        "example": "+996 555 123 456",
+                        "nullable": true
+                    },
+                    "profile": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UserProfileResource"
+                            }
+                        ],
+                        "nullable": true
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time"
@@ -970,6 +995,16 @@
                     "updated_at": {
                         "type": "string",
                         "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "UserProfileResource": {
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "example": "+996 555 123 456",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -988,6 +1023,11 @@
                         "type": "string",
                         "format": "email",
                         "example": "alice@example.com"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+996 555 123 456",
+                        "nullable": true
                     },
                     "created_at": {
                         "type": "string",

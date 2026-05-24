@@ -8,9 +8,12 @@ use App\Services\EntityBroadcastService;
 use Illuminate\Support\Facades\Artisan;
 
 test('users api index returns paginated users', function () {
-    User::factory()->create([
+    $user = User::factory()->create([
         'name' => 'Alice',
         'email' => 'alice@example.com',
+    ]);
+    $user->profile()->create([
+        'phone' => '+996 555 123 456',
     ]);
 
     $this->getJson('/api/users')
@@ -21,18 +24,24 @@ test('users api index returns paginated users', function () {
             'meta',
         ])
         ->assertJsonPath('data.0.name', 'Alice')
-        ->assertJsonPath('data.0.email', 'alice@example.com');
+        ->assertJsonPath('data.0.email', 'alice@example.com')
+        ->assertJsonPath('data.0.phone', '+996 555 123 456')
+        ->assertJsonPath('data.0.profile.phone', '+996 555 123 456');
 });
 
 test('users api show returns user details', function () {
     $user = User::factory()->create([
         'name' => 'Alice',
     ]);
+    $user->profile()->create([
+        'phone' => '+996 700 111 222',
+    ]);
 
     $this->getJson("/api/users/{$user->id}")
         ->assertOk()
         ->assertJsonPath('id', $user->id)
-        ->assertJsonPath('name', 'Alice');
+        ->assertJsonPath('name', 'Alice')
+        ->assertJsonPath('profile.phone', '+996 700 111 222');
 });
 
 test('categories api returns counts and show includes products', function () {
@@ -117,20 +126,25 @@ test('users api can create and update users', function () {
     $createResponse = $this->postJson('/api/users', [
         'name' => 'Alice',
         'email' => 'alice@example.com',
+        'phone' => '+996 555 123 456',
     ]);
 
     $createResponse
         ->assertCreated()
         ->assertJsonPath('name', 'Alice')
-        ->assertJsonPath('email', 'alice@example.com');
+        ->assertJsonPath('email', 'alice@example.com')
+        ->assertJsonPath('phone', '+996 555 123 456')
+        ->assertJsonPath('profile.phone', '+996 555 123 456');
 
     $userId = $createResponse->json('id');
 
     $this->putJson("/api/users/{$userId}", [
         'name' => 'Alice Updated',
         'email' => 'alice@example.com',
+        'phone' => '+996 700 111 222',
     ])->assertOk()
-        ->assertJsonPath('name', 'Alice Updated');
+        ->assertJsonPath('name', 'Alice Updated')
+        ->assertJsonPath('profile.phone', '+996 700 111 222');
 });
 
 test('categories api can create, update, and protect deletion with products', function () {
@@ -293,5 +307,7 @@ test('swagger documentation route loads and generated spec includes catalog endp
     expect($spec)->toContain('/api/products');
     expect($spec)->toContain('/api/tags');
     expect($spec)->toContain('UserResource');
+    expect($spec)->toContain('UserProfileResource');
+    expect($spec)->toContain('phone');
     expect($spec)->toContain('ProductResource');
 });

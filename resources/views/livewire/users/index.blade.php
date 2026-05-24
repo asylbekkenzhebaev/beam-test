@@ -29,6 +29,7 @@
                 <tr>
                     <th class="pb-3">Имя</th>
                     <th class="pb-3">Email</th>
+                    <th class="pb-3">Телефон</th>
                     <th class="pb-3 text-right">Действия</th>
                 </tr>
             </thead>
@@ -37,6 +38,7 @@
                     <tr>
                         <td class="py-4 font-medium">{{ $user->name }}</td>
                         <td class="py-4 text-stone-600">{{ $user->email }}</td>
+                        <td class="py-4 text-stone-600">{{ $user->profile?->phone ?: '—' }}</td>
                         <td class="py-4">
                             <div class="flex justify-end gap-2">
                                 <button type="button" wire:click="edit({{ $user->id }})" class="rounded-full bg-stone-100 px-3 py-1.5 text-stone-700">Редактировать</button>
@@ -46,7 +48,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="3" class="py-6 text-center text-stone-500">Пользователей пока нет.</td>
+                        <td colspan="4" class="py-6 text-center text-stone-500">Пользователей пока нет.</td>
                     </tr>
                 @endforelse
             </tbody>
