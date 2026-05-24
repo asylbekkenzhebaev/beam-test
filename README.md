@@ -345,3 +345,13 @@ php artisan test
 - websocket broadcast на create/update
 - автообновление таблиц после websocket-событий
 - сиды
+
+## Полезные команды
+
+```bash
+php artisan route:list
+php artisan about
+php artisan migrate:fresh --seed
+php artisan l5-swagger:generate
+php artisan test
+```
